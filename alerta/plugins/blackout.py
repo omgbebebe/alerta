@@ -2,6 +2,7 @@ import logging
 
 from alerta.exceptions import BlackoutPeriod
 from alerta.plugins import PluginBase
+from alerta.models.alert import Alert
 
 LOG = logging.getLogger('alerta.plugins')
 
@@ -44,3 +45,26 @@ class BlackoutHandler(PluginBase):
 
     def delete(self, alert, **kwargs) -> bool:
         raise NotImplementedError
+
+    def blackout_change(self, blackout, action):
+        LOG.debug('Blackout {} state changed: {}'.format(blackout.id, action))
+        alerts = Alert.find_all()
+        for alert in alerts:
+            if action == 'create' and alert.is_blackout():
+                LOG.debug("{} alert should be muted".format(alert.id))
+                attributes = alert.attributes
+                attributes['blackout'] = blackout.id
+                alert.update_attributes(attributes)
+                alert.set_status('blackout', text='muted by blackout plugin')
+            elif action == 'update':
+                if alert.is_blackout():
+                    if alert.status != 'blackout':
+                        attributes = alert.attributes
+                        attributes['blackout'] = blackout.id
+                        alert.update_attributes(attributes)
+                        alert.set_status('blackout', text='muted by blackout plugin')
+                elif 'blackout' in alert.attributes:
+                    alert.set_status('open', text='reopened by blackout plugin')
+            elif action == 'delete':
+                if 'blackout' in alert.attributes and alert.attributes['blackout'] == blackout.id:
+                    alert.set_status('open', text='reopened by blackout plugin')

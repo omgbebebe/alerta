@@ -42,6 +42,10 @@ class PluginBase(metaclass=abc.ABCMeta):
         """Trigger integrations when an alert is deleted. (optional)"""
         raise NotImplementedError
 
+    def blackout_change(self, blackout, action):
+        """Trigger integrations when blackout state changed. (optional)"""
+        raise NotImplementedError
+
     def get_config(self, key, default=None, type=None, **kwargs):
 
         if key in os.environ:

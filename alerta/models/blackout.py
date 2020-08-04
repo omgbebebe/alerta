@@ -6,6 +6,7 @@ from flask import current_app
 
 from alerta.app import db
 from alerta.database.base import Query
+from alerta.utils.api import process_blackout
 from alerta.utils.format import DateTime
 from alerta.utils.response import absolute_url
 
@@ -189,9 +190,11 @@ class Blackout:
 
     # create a blackout
     def create(self) -> 'Blackout':
-        return Blackout.from_db(db.create_blackout(self))
+        blackout = Blackout.from_db(db.create_blackout(self))
+        process_blackout(blackout, action='create')
+        return blackout
 
-    # get a blackout
+# get a blackout
     @staticmethod
     def find_by_id(id: str, customers: List[str] = None) -> Optional['Blackout']:
         return Blackout.from_db(db.get_blackout(id, customers))
@@ -205,7 +208,11 @@ class Blackout:
             kwargs['startTime'] = DateTime.parse(kwargs['startTime'])
         if kwargs.get('endTime'):
             kwargs['endTime'] = DateTime.parse(kwargs['endTime'])
-        return Blackout.from_db(db.update_blackout(self.id, **kwargs))
+        blackout = Blackout.from_db(db.update_blackout(self.id, **kwargs))
+        process_blackout(blackout, action='update')
+        return blackout
 
     def delete(self) -> bool:
-        return db.delete_blackout(self.id)
+        result = db.delete_blackout(self.id)
+        process_blackout(self, action='delete')
+        return result

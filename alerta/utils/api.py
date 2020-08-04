@@ -120,6 +120,21 @@ def process_action(alert: Alert, action: str, text: str, timeout: int = None) ->
     return alert, action, text, timeout
 
 
+def process_blackout(blackout, action : str) -> None:
+    wanted_plugins, wanted_config = plugins.routing(None)
+
+    for plugin in wanted_plugins:
+        try:
+            plugin.blackout_change(blackout, action)
+        except NotImplementedError:
+            pass
+        except Exception as e:
+            if current_app.config['PLUGINS_RAISE_ON_ERROR']:
+                raise ApiError("Error while running blackout-chanded plugin '{}': {}".format(plugin.name, str(e)))
+            else:
+                logging.error("Error while running blackout-changed plugin '{}': {}".format(plugin.name, str(e)))
+
+
 def process_status(alert: Alert, status: str, text: str) -> Tuple[Alert, str, str]:
 
     wanted_plugins, wanted_config = plugins.routing(alert)

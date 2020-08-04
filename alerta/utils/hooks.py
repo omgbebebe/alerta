@@ -9,6 +9,7 @@ pre_receive_hook = hook_signals.signal('pre-receive')
 post_receive_hook = hook_signals.signal('post-receive')
 status_change_hook = hook_signals.signal('status-change')
 take_action_hook = hook_signals.signal('take-action')
+blackout_change_hook = hook_signals.signal('blackout-change')
 
 
 class HookTrigger:
@@ -23,6 +24,7 @@ class HookTrigger:
         post_receive_hook.connect(self.process_post_receive)
         status_change_hook.connect(self.process_status_change)
         take_action_hook.connect(self.process_take_action)
+        blackout_change_hook.connect(self.process_blackout_change)
 
     def process_pre_receive(self, alert):
         # not used
@@ -47,5 +49,9 @@ class HookTrigger:
         return alert, status, text
 
     def process_take_action(self, alert, action, text):
+        # not used
+        pass
+
+    def process_blackout_change(self, blackout, action):
         # not used
         pass
